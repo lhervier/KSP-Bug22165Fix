@@ -133,8 +133,8 @@ namespace com.github.lhervier.ksp {
                 return;
             }
 
-            screenMessage.message = "Action Set: " + actionSet.GetLabel() + ".";
-            ScreenMessages.PostScreenMessage(screenMessage);
+            this.screenMessage.message = "Action Set: " + actionSet.GetLabel() + ".";
+            ScreenMessages.PostScreenMessage(this.screenMessage);
             this.prevActionSet = actionSet;
         }
 
