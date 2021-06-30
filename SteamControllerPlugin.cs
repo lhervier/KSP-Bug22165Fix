@@ -60,7 +60,7 @@ namespace com.github.lhervier.ksp {
             );
             logger.Log("Status message ready");
 
-            GameEvents.onLevelWasLoaded.Add(OnLevelWasLoaded);
+            GameEvents.onLevelWasLoadedGUIReady.Add(OnLevelWasLoadedGUIReady);
             GameEvents.onGamePause.Add(OnGamePause);
             GameEvents.onGameUnpause.Add(OnGameUnpause);
             GameEvents.OnFlightUIModeChanged.Add(OnFlightUIModeChanged);
@@ -145,7 +145,7 @@ namespace com.github.lhervier.ksp {
         // <summary>
         //  A new scene has been loaded
         // </summary>
-        protected void OnLevelWasLoaded(GameScenes scn) {
+        protected void OnLevelWasLoadedGUIReady(GameScenes scn) {
             logger.Log("Level was loaded on scene : " + scn.ToString());
             this.daemon.TriggerActionSetChange();
         }
