@@ -93,7 +93,7 @@ namespace com.github.lhervier.ksp {
             WaitForSeconds updateYield = new WaitForSeconds(1f);
             while( true ) {
                 SteamController.RunFrame();
-                
+
                 // Detect connection/disconnection
                 int nbControllers = SteamController.GetConnectedControllers(this._controllerHandles);
                 bool newController = false;
@@ -152,7 +152,7 @@ namespace com.github.lhervier.ksp {
             foreach(KSPActionSets actionSet in Enum.GetValues(typeof(KSPActionSets))) {
                 string actionSetName = actionSet.GetId();
                 logger.Log("- Getting action set handle for " + actionSetName);
-                // Action Set whould depend on the used controller. But that's not what the API is waiting for...
+                // Action Sets list should depend on the used controller. But that's not what the API is waiting for...
                 ControllerActionSetHandle_t actionSetHandle = SteamController.GetActionSetHandle(actionSetName);
                 if( actionSetHandle.m_ControllerActionSetHandle == 0L ) {
                     logger.Log("ERROR : Action set handle for " + actionSetName + " not found. I will use the default action set instead");
