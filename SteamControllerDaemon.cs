@@ -92,6 +92,8 @@ namespace com.github.lhervier.ksp {
         private IEnumerator CheckForController() {
             WaitForSeconds updateYield = new WaitForSeconds(1f);
             while( true ) {
+                SteamController.RunFrame();
+                
                 // Detect connection/disconnection
                 int nbControllers = SteamController.GetConnectedControllers(this._controllerHandles);
                 bool newController = false;
@@ -138,7 +140,6 @@ namespace com.github.lhervier.ksp {
 
                 // Wait for 1 second
                 yield return updateYield;
-                SteamController.RunFrame();
             }
         }
 
