@@ -116,8 +116,12 @@ namespace com.github.lhervier.ksp {
                 logger.Log("- Loaded scene is Tracking station");
                 return KSPActionSets.Map;
             
-            } else if( HighLogic.LoadedSceneIsEditor || (int) HighLogic.LoadedScene == 21 ) {
-                logger.Log("- Loaded scene is editor");
+            } else if( HighLogic.LoadedSceneIsEditor) {
+                logger.Log("- Loaded scene is Editor");
+                return KSPActionSets.Editor;
+            
+            } else if( HighLogic.LoadedScene == GameScenes.MISSIONBUILDER ) {
+                logger.Log("- Loaded scene is Mission Builder");
                 return KSPActionSets.Editor;
             }
             
