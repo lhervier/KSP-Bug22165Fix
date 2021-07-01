@@ -1,10 +1,4 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using Steamworks;
-using KSP.UI.Screens.Flight;
-using com.github.lhervier.ksp;
 
 namespace com.github.lhervier.ksp {
     
@@ -17,6 +11,13 @@ namespace com.github.lhervier.ksp {
         private static SteamControllerLogger LOGGER = new SteamControllerLogger();
         
         // <summary>
+        //  Delay before changing an action set (in frames)
+        // </summary>
+        private static int DELAY = 10;
+        
+        // ==================================================================================
+
+        // <summary>
         //  Message indicating when on Steam Controller mode change
         // </summary>    
         private ScreenMessage screenMessage;
@@ -27,9 +28,14 @@ namespace com.github.lhervier.ksp {
         private KSPActionSets prevActionSet;
 
         // <summary>
-        //  Daemon to communicate with the steam controller
+        //  Connection Daemon
         // </summary>
-        private SteamControllerDaemon daemon;
+        private SteamControllerConnectionDaemon connectionDaemon;
+        
+        // <summary>
+        //  Delayed Action daemon
+        // </summary>
+        private DelayedActionDaemon delayedActionDaemon;
 
         // ===============================================================================
         //                      Unity initialization
@@ -58,8 +64,18 @@ namespace com.github.lhervier.ksp {
                 LOGGER.Log("Steam not detected. Unable to start the plugin.");
                 return;
             }
-            LOGGER.Log("Started");
             
+            // Attach to connection Daemon
+            this.connectionDaemon = SteamControllerConnectionDaemon.INSTANCE;
+            this.connectionDaemon.OnControllerConnected.Add(OnControllerConnected);
+            this.connectionDaemon.OnControllerDisconnected.Add(OnControllerDisconnected);
+            LOGGER.Log("Connection Daemon attached");
+
+            // Attach to delayed action daemon
+            this.delayedActionDaemon = DelayedActionDaemon.INSTANCE;
+            LOGGER.Log("Delayed Actions Daemon attached");
+            
+            // Prepare screen message
             this.screenMessage = new ScreenMessage(
                 string.Empty, 
                 10f, 
@@ -67,26 +83,65 @@ namespace com.github.lhervier.ksp {
             );
             LOGGER.Log("Status message ready");
 
+            // Hooks to KSP
             GameEvents.onLevelWasLoadedGUIReady.Add(OnLevelWasLoadedGUIReady);
             GameEvents.onGamePause.Add(OnGamePause);
             GameEvents.onGameUnpause.Add(OnGameUnpause);
             GameEvents.OnFlightUIModeChanged.Add(OnFlightUIModeChanged);
             GameEvents.OnMapEntered.Add(OnMapEntered);
             GameEvents.onVesselChange.Add(OnVesselChange);
-            LOGGER.Log("KSP events callbacks created");
+            LOGGER.Log("KSP hooks created");
 
-            this.daemon = SteamControllerDaemon.INSTANCE;
-            this.daemon.OnActionSetChanged = this.OnActionSetChanged;
-            this.daemon.ComputeActionSet = this.ComputeActionSet;
-            LOGGER.Log("Daemon created");
+            // When a controller is already connected
+            if( this.connectionDaemon.ControllerConnected ) {
+                this.OnControllerConnected();
+            }
+            
+            LOGGER.Log("Started");
         }
 
-        // =================================================================
+        // ====================================================================================
 
         // <summary>
-        //  Method called by the controller daemon when a change action set action is triggered
+        //  Trigger an action set change
         // </summary>
-        public KSPActionSets ComputeActionSet() {
+        public void TriggerActionSetChange() {
+            this.delayedActionDaemon.TriggerDelayedAction(this._TriggerActionSetChange, DELAY);
+        }
+        private void _TriggerActionSetChange() {
+            this._SetActionSet(this.ComputeActionSet());
+        }
+
+        // <summary>
+        //  Cancel an action set change
+        // </summary>
+        private void CancelActionSetChange() {
+            this.delayedActionDaemon.CancelDelayedAction(this._TriggerActionSetChange);
+        }
+
+        // <summary>
+        //  Change action set NOW
+        // </summary>
+        public void SetActionSet(KSPActionSets actionSet) {
+            this.CancelActionSetChange();
+            this._SetActionSet(actionSet);
+        }
+        private void _SetActionSet(KSPActionSets actionSet) {
+            LOGGER.Log("=> Setting controller Action Set to " + actionSet.GetLabel());
+            this.connectionDaemon.setActionSet(actionSet);
+
+            if( actionSet != this.prevActionSet ) {
+                LOGGER.Log("Displaying message");
+                this.screenMessage.message = "Action Set: " + actionSet.GetLabel() + ".";
+                ScreenMessages.PostScreenMessage(this.screenMessage);
+                this.prevActionSet = actionSet;
+            }
+        }
+
+        // <summary>
+        //  Compute the action set to use, depending on the KSP context
+        // </summary>
+        private KSPActionSets ComputeActionSet() {
             LOGGER.Log("Detecting Steam Controller Mode");
             if( HighLogic.LoadedSceneIsFlight ) {
                 LOGGER.Log("- Loaded Scene is Flight");
@@ -132,27 +187,37 @@ namespace com.github.lhervier.ksp {
             
             return KSPActionSets.Menu;
         }
-
-        protected void OnActionSetChanged(KSPActionSets actionSet) {
-            if( actionSet == this.prevActionSet ) {
-                return;
-            }
-
-            this.screenMessage.message = "Action Set: " + actionSet.GetLabel() + ".";
-            ScreenMessages.PostScreenMessage(this.screenMessage);
-            this.prevActionSet = actionSet;
+        
+        // ==============================================================================
+        //              Connection/disconnection events of controller
+        // ==============================================================================
+        
+        // <summary>
+        //  New controller connected
+        // </summary>
+        private void OnControllerConnected() {
+            // Trigger an action set change to load the right action set
+            this.TriggerActionSetChange();
         }
 
-        // ============================
-        //          KSP Events
-        // ============================
+        // <summary>
+        //  Controller disconnected
+        // </summary>
+        private void OnControllerDisconnected() {
+            LOGGER.Log("Canceling eventual action set change");
+            this.CancelActionSetChange();
+        }
+
+        // ========================================================================================
+        //                                      KSP Events
+        // ========================================================================================
 
         // <summary>
         //  A new scene has been loaded
         // </summary>
         protected void OnLevelWasLoadedGUIReady(GameScenes scn) {
             LOGGER.Log("Level was loaded on scene : " + scn.ToString());
-            this.daemon.TriggerActionSetChange();
+            this.TriggerActionSetChange();
         }
 
         // <summary>
@@ -161,7 +226,7 @@ namespace com.github.lhervier.ksp {
         // </summary>
         protected void OnGamePause() {
             LOGGER.Log("Game has been paused");
-            this.daemon.SetActionSet(KSPActionSets.Menu);
+            this.SetActionSet(KSPActionSets.Menu);
         }
         
         // <summary>
@@ -170,7 +235,7 @@ namespace com.github.lhervier.ksp {
         // </summary>
         protected void OnGameUnpause() {
             LOGGER.Log("Game has been unpaused");
-            this.daemon.SetActionSet(this.ComputeActionSet());
+            this.SetActionSet(this.ComputeActionSet());
         }
         
         // <summary>
@@ -178,7 +243,7 @@ namespace com.github.lhervier.ksp {
         // </summary>
         protected void OnFlightUIModeChanged(FlightUIMode mode) {
             LOGGER.Log("Flight UI mode changed to " + mode.ToString());
-            this.daemon.TriggerActionSetChange();
+            this.TriggerActionSetChange();
         }
 
         // <summary>
@@ -186,7 +251,7 @@ namespace com.github.lhervier.ksp {
         // </summary>
         protected void OnMapEntered() {
             LOGGER.Log("Entered Map view");
-            this.daemon.SetActionSet(KSPActionSets.Map);
+            this.SetActionSet(KSPActionSets.Map);
         }
 
         // <summary>
@@ -194,7 +259,7 @@ namespace com.github.lhervier.ksp {
         // </summary>
         protected void OnVesselChange(Vessel ves) {
             LOGGER.Log("Vessel changed");
-            this.daemon.TriggerActionSetChange();
+            this.TriggerActionSetChange();
         }
     }
 }

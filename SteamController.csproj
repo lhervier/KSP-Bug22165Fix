@@ -47,10 +47,10 @@
 
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="DelayedActions.cs" />
     <Compile Include="SteamControllerLogger.cs" />
     <Compile Include="KSPActionSets.cs" />
     <Compile Include="SteamControllerConnectionDaemon.cs" />
-    <Compile Include="SteamControllerDaemon.cs" />
     <Compile Include="SteamControllerPlugin.cs" />
   </ItemGroup>
   
