@@ -91,7 +91,7 @@ namespace com.github.lhervier.ksp {
                     return KSPActionSets.Map;
                 }
                 
-                if( FlightGlobals.ActiveVessel.isEVA ) {
+                if( FlightGlobals.ActiveVessel != null && FlightGlobals.ActiveVessel.isEVA ) {
                     logger.Log("=> EVA is in progress");
                     return KSPActionSets.EVA;
                 }
