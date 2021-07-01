@@ -8,24 +8,32 @@ using com.github.lhervier.ksp;
 
 namespace com.github.lhervier.ksp {
 
-    public class SteamControllerDaemon {
+    [KSPAddon(KSPAddon.Startup.PSystemSpawn, true)]
+    public class SteamControllerDaemon : MonoBehaviour {
         
-        private SteamControllerLogger logger = new SteamControllerLogger("Daemon");
+        // <summary>
+        //  Instance to the object
+        // </summary>
+        public static SteamControllerDaemon INSTANCE = null;
 
         // <summary>
-        //  The main plugin (to launch co-routines)
+        //  Logger object
         // </summary>
-        private MonoBehaviour plugin;
+        private static SteamControllerLogger LOGGER = new SteamControllerLogger("Daemon");
+
+        // ===============================================
 
         // <summary>
         //  Called when the action set has changed
         // </summary>
-        private Action<KSPActionSets> OnActionSetChanged;
+        public Action<KSPActionSets> OnActionSetChanged { get; set; }
 
         // <summary>
         //  Function called to get the action set, depending on the current KSP context
         // </summary>
-        private Func<KSPActionSets> ComputeActionSet;
+        public Func<KSPActionSets> ComputeActionSet {get; set; }
+
+        // ==============================================
 
         // <summary>
         //  Handles to the connected steam controllers.
@@ -41,7 +49,7 @@ namespace com.github.lhervier.ksp {
         // <summary>
         //  Has the controller been configured ?
         // </summary>
-        public bool ControllerConfigured { get; private set; }
+        private bool controllerConfigured = false;
 
         // <summary>
         //  The action sets handles defined in the steam controller configuration template
@@ -60,26 +68,40 @@ namespace com.github.lhervier.ksp {
         // </summary>
         private Coroutine UpdateActionSetCoroutine;
 
-        // <summary>
-        //  Constructor
-        // </summary>
-        // <param name="plugin">Instance of the parent plugin</param>
-        // <param name="OnActionSetChanged">Called when the action set is updated</param>
-        // <param name="ComputeActionSet">Function that will compute the action set, depending on the current KSP context</param>
-        public SteamControllerDaemon(
-            MonoBehaviour plugin, 
-            Action<KSPActionSets> OnActionSetChanged,
-            Func<KSPActionSets> ComputeActionSet
-        ) {
-            this.plugin = plugin;
-            this.OnActionSetChanged = OnActionSetChanged;
-            this.ComputeActionSet = ComputeActionSet;
+        // =======================================================================
+        //              Unity Lifecycle
+        // =======================================================================
 
+        // <summary>
+        //  Plugin awaked
+        // </summary>
+        public void Awake() {
+            LOGGER.Log("Awaked");
+            DontDestroyOnLoad(this);
+            INSTANCE = this;
+        }
+
+        // <summary>
+        //  Plugin destroyed
+        // </summary>
+        public void OnDestroy() {
+            INSTANCE = null;
+            LOGGER.Log("Destroyed");
+        }
+
+        // <summary>
+        //  Startup of the beahviour
+        // </summary>
+        public void Start() {
+            if( !SteamManager.Initialized ) {
+                LOGGER.Log("Steam not detected. Unable to start the daemon.");
+                return;
+            }
             SteamAPI.RunCallbacks();
             SteamController.Init();
 
-            this.plugin.StartCoroutine(this.CheckForController());
-            logger.Log("Daemon started");
+            this.StartCoroutine(this.CheckForController());
+            LOGGER.Log("Started");
         }
 
         // ==============================================================================
@@ -99,7 +121,7 @@ namespace com.github.lhervier.ksp {
                 bool newController = false;
                 bool disconnectedController = false;
                 if( nbControllers == 0 ) {
-                    if( this.ControllerConfigured ) {
+                    if( this.controllerConfigured ) {
                         newController = false;
                         disconnectedController = true;
                     } else {
@@ -107,7 +129,7 @@ namespace com.github.lhervier.ksp {
                         disconnectedController = false;
                     }
                 } else {
-                    if( this.ControllerConfigured ) {
+                    if( this.controllerConfigured ) {
                         if( this.controllerHandle == this._controllerHandles[0] ) {
                             newController = false;
                             disconnectedController = false;
@@ -123,18 +145,18 @@ namespace com.github.lhervier.ksp {
 
                 // Disconnect the current controller
                 if( disconnectedController ) {
-                    logger.Log("Steam Controller disconnected");
+                    LOGGER.Log("Steam Controller disconnected");
                     this.actionsSetsHandles.Clear();
-                    this.ControllerConfigured = false;
+                    this.controllerConfigured = false;
                 }
 
                 // Connect a new controller
                 if( newController ) {
-                    logger.Log("Steam Controller connected");
+                    LOGGER.Log("Steam Controller connected");
                     this.controllerHandle = this._controllerHandles[0];
                     this.LoadActionSetHandles();
-                    this.plugin.StartCoroutine(this.SayHello());
-                    this.ControllerConfigured = true;
+                    this.StartCoroutine(this.SayHello());
+                    this.controllerConfigured = true;
                     this.TriggerActionSetChange();
                 }
 
@@ -148,14 +170,14 @@ namespace com.github.lhervier.ksp {
         //  it seems to load the action sets of the first controller.
         // </summary>
         private void LoadActionSetHandles() {
-            logger.Log("Loading Action Set Handles");
+            LOGGER.Log("Loading Action Set Handles");
             foreach(KSPActionSets actionSet in Enum.GetValues(typeof(KSPActionSets))) {
                 string actionSetName = actionSet.GetId();
-                logger.Log("- Getting action set handle for " + actionSetName);
+                LOGGER.Log("- Getting action set handle for " + actionSetName);
                 // Action Sets list should depend on the used controller. But that's not what the API is waiting for...
                 ControllerActionSetHandle_t actionSetHandle = SteamController.GetActionSetHandle(actionSetName);
                 if( actionSetHandle.m_ControllerActionSetHandle == 0L ) {
-                    logger.Log("ERROR : Action set handle for " + actionSetName + " not found. I will use the default action set instead");
+                    LOGGER.Log("ERROR : Action set handle for " + actionSetName + " not found. I will use the default action set instead");
                 }
                 this.actionsSetsHandles[actionSet] = actionSetHandle;
             }
@@ -165,7 +187,7 @@ namespace com.github.lhervier.ksp {
         //  Trigger a set of pulses on the current controller to say hello
         // </summary>
         public IEnumerator SayHello() {
-            logger.Log("Hello new Controller !!");
+            LOGGER.Log("Hello new Controller !!");
             for( int i = 0; i < 2; i++ ) {
                 SteamController.TriggerHapticPulse(this.controllerHandle, Steamworks.ESteamControllerPad.k_ESteamControllerPad_Right, ushort.MaxValue);
                 yield return new WaitForSeconds(0.1f);
@@ -184,13 +206,13 @@ namespace com.github.lhervier.ksp {
         //  Demande à mettre à jour l'action set courant
         // </summary>
         public void TriggerActionSetChange() {
-            if( !this.ControllerConfigured ) {
+            if( !this.controllerConfigured ) {
                 return;
             }
             
             this.askedActionSetChange = Time.frameCount;
             if( this.UpdateActionSetCoroutine == null ) {
-                this.UpdateActionSetCoroutine = this.plugin.StartCoroutine(_TriggerActionSetChange());
+                this.UpdateActionSetCoroutine = this.StartCoroutine(_TriggerActionSetChange());
             }
         }
 
@@ -202,7 +224,7 @@ namespace com.github.lhervier.ksp {
                 return;
             }
 
-            this.plugin.StopCoroutine(this.UpdateActionSetCoroutine);
+            this.StopCoroutine(this.UpdateActionSetCoroutine);
             this.UpdateActionSetCoroutine = null;
         }
 
@@ -211,7 +233,7 @@ namespace com.github.lhervier.ksp {
         //  Change the current action set NOW (without delay)
         // </summary>
         public void SetActionSet(KSPActionSets actionSet) {
-            if( !this.ControllerConfigured ) {
+            if( !this.controllerConfigured ) {
                 return;
             }
 
@@ -228,7 +250,7 @@ namespace com.github.lhervier.ksp {
         }
 
         private void _SetActionSet(KSPActionSets actionSet) {
-            logger.Log("=> Setting controller Action Set to " + actionSet.GetLabel());
+            LOGGER.Log("=> Setting controller Action Set to " + actionSet.GetLabel());
             SteamController.ActivateActionSet(this.controllerHandle, this.actionsSetsHandles[actionSet]);
             this.OnActionSetChanged(actionSet);
         }

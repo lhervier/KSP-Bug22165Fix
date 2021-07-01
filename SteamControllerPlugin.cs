@@ -8,13 +8,13 @@ using com.github.lhervier.ksp;
 
 namespace com.github.lhervier.ksp {
     
-    [KSPAddon(KSPAddon.Startup.PSystemSpawn, false)]
+    [KSPAddon(KSPAddon.Startup.PSystemSpawn, true)]
     public class SteamControllerPlugin : MonoBehaviour {
         
         // <summary>
         //  Logger
         // </summary>
-        private SteamControllerLogger logger = new SteamControllerLogger();
+        private static SteamControllerLogger LOGGER = new SteamControllerLogger();
         
         // <summary>
         //  Message indicating when on Steam Controller mode change
@@ -39,8 +39,15 @@ namespace com.github.lhervier.ksp {
         //  Make our plugin survive between scene loading
         // </summary>
         protected void Awake() {
-            logger.Log("Plugin awaked");
-            UnityEngine.Object.DontDestroyOnLoad(this);
+            LOGGER.Log("Awaked");
+            DontDestroyOnLoad(this);
+        }
+
+        // <summary>
+        //  Plugin destroyed
+        // </summary>
+        public void OnDestroy() {
+            LOGGER.Log("Destroyed");
         }
 
         // <summary>
@@ -48,17 +55,17 @@ namespace com.github.lhervier.ksp {
         // </summary>
         protected void Start() {
             if( !SteamManager.Initialized ) {
-                logger.Log("Steam not detected. Unable to start the plugin.");
+                LOGGER.Log("Steam not detected. Unable to start the plugin.");
                 return;
             }
-            logger.Log("Plugin started");
+            LOGGER.Log("Started");
             
             this.screenMessage = new ScreenMessage(
                 string.Empty, 
                 10f, 
                 ScreenMessageStyle.UPPER_RIGHT
             );
-            logger.Log("Status message ready");
+            LOGGER.Log("Status message ready");
 
             GameEvents.onLevelWasLoadedGUIReady.Add(OnLevelWasLoadedGUIReady);
             GameEvents.onGamePause.Add(OnGamePause);
@@ -66,14 +73,12 @@ namespace com.github.lhervier.ksp {
             GameEvents.OnFlightUIModeChanged.Add(OnFlightUIModeChanged);
             GameEvents.OnMapEntered.Add(OnMapEntered);
             GameEvents.onVesselChange.Add(OnVesselChange);
-            logger.Log("KSP events callbacks created");
+            LOGGER.Log("KSP events callbacks created");
 
-            this.daemon = new SteamControllerDaemon(
-                this, 
-                this.OnActionSetChanged,
-                this.ComputeActionSet
-            );
-            logger.Log("Daemon created");
+            this.daemon = SteamControllerDaemon.INSTANCE;
+            this.daemon.OnActionSetChanged = this.OnActionSetChanged;
+            this.daemon.ComputeActionSet = this.ComputeActionSet;
+            LOGGER.Log("Daemon created");
         }
 
         // =================================================================
@@ -82,22 +87,22 @@ namespace com.github.lhervier.ksp {
         //  Method called by the controller daemon when a change action set action is triggered
         // </summary>
         public KSPActionSets ComputeActionSet() {
-            logger.Log("Detecting Steam Controller Mode");
+            LOGGER.Log("Detecting Steam Controller Mode");
             if( HighLogic.LoadedSceneIsFlight ) {
-                logger.Log("- Loaded Scene is Flight");
+                LOGGER.Log("- Loaded Scene is Flight");
                 
                 if( MapView.MapIsEnabled ) {
-                    logger.Log("=> MapView is enabled");
+                    LOGGER.Log("=> MapView is enabled");
                     return KSPActionSets.Map;
                 }
                 
                 if( FlightGlobals.ActiveVessel != null && FlightGlobals.ActiveVessel.isEVA ) {
-                    logger.Log("=> EVA is in progress");
+                    LOGGER.Log("=> EVA is in progress");
                     return KSPActionSets.EVA;
                 }
                 
                 FlightUIMode mode = FlightUIModeController.Instance.Mode;
-                logger.Log("=> Flight UI is in " + mode.ToString() + " mode");
+                LOGGER.Log("=> Flight UI is in " + mode.ToString() + " mode");
                 switch( mode ) {
                 
                 case FlightUIMode.STAGING:
@@ -113,15 +118,15 @@ namespace com.github.lhervier.ksp {
                 }
             
             } else if( HighLogic.LoadedScene == GameScenes.TRACKSTATION ) {
-                logger.Log("- Loaded scene is Tracking station");
+                LOGGER.Log("- Loaded scene is Tracking station");
                 return KSPActionSets.Map;
             
             } else if( HighLogic.LoadedSceneIsEditor) {
-                logger.Log("- Loaded scene is Editor");
+                LOGGER.Log("- Loaded scene is Editor");
                 return KSPActionSets.Editor;
             
             } else if( HighLogic.LoadedScene == GameScenes.MISSIONBUILDER ) {
-                logger.Log("- Loaded scene is Mission Builder");
+                LOGGER.Log("- Loaded scene is Mission Builder");
                 return KSPActionSets.Editor;
             }
             
@@ -146,7 +151,7 @@ namespace com.github.lhervier.ksp {
         //  A new scene has been loaded
         // </summary>
         protected void OnLevelWasLoadedGUIReady(GameScenes scn) {
-            logger.Log("Level was loaded on scene : " + scn.ToString());
+            LOGGER.Log("Level was loaded on scene : " + scn.ToString());
             this.daemon.TriggerActionSetChange();
         }
 
@@ -155,7 +160,7 @@ namespace com.github.lhervier.ksp {
         //  astronaut complex, R&D, Mission Control or administration building.
         // </summary>
         protected void OnGamePause() {
-            logger.Log("Game has been paused");
+            LOGGER.Log("Game has been paused");
             this.daemon.SetActionSet(KSPActionSets.Menu);
         }
         
@@ -164,7 +169,7 @@ namespace com.github.lhervier.ksp {
         //  astronaut complex, R&D, Mission Control or administration building 
         // </summary>
         protected void OnGameUnpause() {
-            logger.Log("Game has been unpaused");
+            LOGGER.Log("Game has been unpaused");
             this.daemon.SetActionSet(this.ComputeActionSet());
         }
         
@@ -172,7 +177,7 @@ namespace com.github.lhervier.ksp {
         //  User toggle the flightUI buttons (staging, docking, maps or maneuvre)
         // </summary>
         protected void OnFlightUIModeChanged(FlightUIMode mode) {
-            logger.Log("Flight UI mode changed to " + mode.ToString());
+            LOGGER.Log("Flight UI mode changed to " + mode.ToString());
             this.daemon.TriggerActionSetChange();
         }
 
@@ -180,7 +185,7 @@ namespace com.github.lhervier.ksp {
         //  Map mode entered (mainly in tracking station)
         // </summary>
         protected void OnMapEntered() {
-            logger.Log("Entered Map view");
+            LOGGER.Log("Entered Map view");
             this.daemon.SetActionSet(KSPActionSets.Map);
         }
 
@@ -188,7 +193,7 @@ namespace com.github.lhervier.ksp {
         //  Vessel changed
         // </summary>
         protected void OnVesselChange(Vessel ves) {
-            logger.Log("Vessel changed");
+            LOGGER.Log("Vessel changed");
             this.daemon.TriggerActionSetChange();
         }
     }
