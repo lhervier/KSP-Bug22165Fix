@@ -127,15 +127,17 @@ namespace com.github.lhervier.ksp {
             this._SetActionSet(actionSet);
         }
         private void _SetActionSet(KSPActionSets actionSet) {
+            if( actionSet == this.prevActionSet ) {
+                return;
+            }
+
             LOGGER.Log("=> Setting controller Action Set to " + actionSet.GetLabel());
             this.connectionDaemon.setActionSet(actionSet);
-
-            if( actionSet != this.prevActionSet ) {
-                LOGGER.Log("Displaying message");
-                this.screenMessage.message = "Action Set: " + actionSet.GetLabel() + ".";
-                ScreenMessages.PostScreenMessage(this.screenMessage);
-                this.prevActionSet = actionSet;
-            }
+            
+            LOGGER.Log("Displaying message");
+            this.screenMessage.message = "Action Set: " + actionSet.GetLabel() + ".";
+            ScreenMessages.PostScreenMessage(this.screenMessage);
+            this.prevActionSet = actionSet;
         }
 
         // <summary>
