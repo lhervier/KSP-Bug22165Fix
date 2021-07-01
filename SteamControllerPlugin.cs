@@ -216,6 +216,9 @@ namespace com.github.lhervier.ksp {
         //  A new scene has been loaded
         // </summary>
         protected void OnLevelWasLoadedGUIReady(GameScenes scn) {
+            if( !this.connectionDaemon.ControllerConnected ) {
+                return;
+            }
             LOGGER.Log("Level was loaded on scene : " + scn.ToString());
             this.TriggerActionSetChange();
         }
@@ -225,6 +228,9 @@ namespace com.github.lhervier.ksp {
         //  astronaut complex, R&D, Mission Control or administration building.
         // </summary>
         protected void OnGamePause() {
+            if( !this.connectionDaemon.ControllerConnected ) {
+                return;
+            }
             LOGGER.Log("Game has been paused");
             this.SetActionSet(KSPActionSets.Menu);
         }
@@ -234,6 +240,9 @@ namespace com.github.lhervier.ksp {
         //  astronaut complex, R&D, Mission Control or administration building 
         // </summary>
         protected void OnGameUnpause() {
+            if( !this.connectionDaemon.ControllerConnected ) {
+                return;
+            }
             LOGGER.Log("Game has been unpaused");
             this.SetActionSet(this.ComputeActionSet());
         }
@@ -242,6 +251,9 @@ namespace com.github.lhervier.ksp {
         //  User toggle the flightUI buttons (staging, docking, maps or maneuvre)
         // </summary>
         protected void OnFlightUIModeChanged(FlightUIMode mode) {
+            if( !this.connectionDaemon.ControllerConnected ) {
+                return;
+            }
             LOGGER.Log("Flight UI mode changed to " + mode.ToString());
             this.TriggerActionSetChange();
         }
@@ -250,6 +262,9 @@ namespace com.github.lhervier.ksp {
         //  Map mode entered (mainly in tracking station)
         // </summary>
         protected void OnMapEntered() {
+            if( !this.connectionDaemon.ControllerConnected ) {
+                return;
+            }
             LOGGER.Log("Entered Map view");
             this.SetActionSet(KSPActionSets.Map);
         }
@@ -258,6 +273,9 @@ namespace com.github.lhervier.ksp {
         //  Vessel changed
         // </summary>
         protected void OnVesselChange(Vessel ves) {
+            if( !this.connectionDaemon.ControllerConnected ) {
+                return;
+            }
             LOGGER.Log("Vessel changed");
             this.TriggerActionSetChange();
         }
