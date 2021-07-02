@@ -247,7 +247,6 @@ namespace com.github.lhervier.ksp
         // </summary>
         protected void OnLevelWasLoadedGUIReady(GameScenes scn) 
         {
-            LOGGER.Log("OnLevelWasLoadedGUIReady");
             this.TriggerActionSetChange();
         }
 
@@ -257,7 +256,6 @@ namespace com.github.lhervier.ksp
         // </summary>
         protected void OnGamePause() 
         {
-            LOGGER.Log("OnGamePause");
             this.SetActionSet(KSPActionSets.Menu);
         }
         
@@ -267,7 +265,6 @@ namespace com.github.lhervier.ksp
         // </summary>
         protected void OnGameUnpause() 
         {
-            LOGGER.Log("OnGameUnpaused");
             this.SetActionSet(this.ComputeActionSet());
         }
         
@@ -276,7 +273,6 @@ namespace com.github.lhervier.ksp
         // </summary>
         protected void OnFlightUIModeChanged(FlightUIMode mode) 
         {
-            LOGGER.Log("OnFlightUIModeChanged");
             this.TriggerActionSetChange();
         }
 
@@ -285,7 +281,6 @@ namespace com.github.lhervier.ksp
         // </summary>
         protected void OnMapEntered() 
         {
-            LOGGER.Log("OnMapEntered");
             this.SetActionSet(KSPActionSets.Map);
         }
 
@@ -294,7 +289,6 @@ namespace com.github.lhervier.ksp
         // </summary>
         protected void OnVesselChange(Vessel ves) 
         {
-            LOGGER.Log("OnVesselChange");
             this.TriggerActionSetChange();
         }
     }
