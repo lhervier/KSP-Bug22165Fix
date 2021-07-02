@@ -50,13 +50,6 @@ namespace com.github.lhervier.ksp {
         }
 
         // <summary>
-        //  Plugin destroyed
-        // </summary>
-        public void OnDestroy() {
-            LOGGER.Log("Destroyed");
-        }
-
-        // <summary>
         //  Start of the plugin
         // </summary>
         protected void Start() {
@@ -66,13 +59,13 @@ namespace com.github.lhervier.ksp {
             }
             
             // Attach to connection Daemon
-            this.connectionDaemon = SteamControllerConnectionDaemon.INSTANCE;
+            this.connectionDaemon = gameObject.AddComponent<SteamControllerConnectionDaemon>();
             this.connectionDaemon.OnControllerConnected.Add(OnControllerConnected);
             this.connectionDaemon.OnControllerDisconnected.Add(OnControllerDisconnected);
             LOGGER.Log("Connection Daemon attached");
 
             // Attach to delayed action daemon
-            this.delayedActionDaemon = DelayedActionDaemon.INSTANCE;
+            this.delayedActionDaemon = gameObject.AddComponent<DelayedActionDaemon>();
             LOGGER.Log("Delayed Actions Daemon attached");
             
             // Prepare screen message
@@ -98,6 +91,15 @@ namespace com.github.lhervier.ksp {
             }
             
             LOGGER.Log("Started");
+        }
+
+        // <summary>
+        //  Plugin destroyed
+        // </summary>
+        public void OnDestroy() {
+            Destroy(this.connectionDaemon);
+            Destroy(this.delayedActionDaemon);
+            LOGGER.Log("Destroyed");
         }
 
         // ====================================================================================

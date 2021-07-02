@@ -9,13 +9,7 @@ namespace com.github.lhervier.ksp {
     //  Allows to launch an action in a set of frames. If the same action is triggered
     //  a second time, the launch of the action will be delayed again.
     // </summary>
-    [KSPAddon(KSPAddon.Startup.PSystemSpawn, true)]
     public class DelayedActionDaemon : MonoBehaviour {
-        
-        // <summary>
-        //  Instance to the object
-        // </summary>
-        public static DelayedActionDaemon INSTANCE = null;
         
         // <summary>
         //  Logger
@@ -46,14 +40,12 @@ namespace com.github.lhervier.ksp {
         public void Awake() {
             LOGGER.Log("Awaked");
             DontDestroyOnLoad(this);
-            INSTANCE = this;
         }
 
         // <summary>
         //  Plugin destroyed
         // </summary>
         public void OnDestroy() {
-            INSTANCE = null;
             LOGGER.Log("Destroyed");
         }
 

@@ -10,13 +10,11 @@ namespace com.github.lhervier.ksp {
     //  Daemon in charge of listening to steam controllers connection/disconnection
     //  It also allow to change the current action set of the controller
     // </summary>
-    [KSPAddon(KSPAddon.Startup.PSystemSpawn, true)]
     public class SteamControllerConnectionDaemon : MonoBehaviour {
         
-        // <summary>
-        //  Instance to the object
-        // </summary>
-        public static SteamControllerConnectionDaemon INSTANCE = null;
+        // ==========================================================================================
+        //                          Static properties
+        // ==========================================================================================
 
         // <summary>
         //  Logger object
@@ -42,7 +40,7 @@ namespace com.github.lhervier.ksp {
 
         // ==============================================
 
-        // <summary>
+// <summary>
         //  Handle to the first connected controller. No sense if controllerConnected = false
         // </summary>
         private ControllerHandle_t controllerHandle;
@@ -67,8 +65,7 @@ namespace com.github.lhervier.ksp {
         // </summary>
         public void Awake() {
             DontDestroyOnLoad(this);
-            INSTANCE = this;
-
+            
             this.OnControllerConnected = new List<Action>();
             this.OnControllerDisconnected = new List<Action>();
             this.ControllerConnected = false;
@@ -79,7 +76,6 @@ namespace com.github.lhervier.ksp {
         //  Plugin destroyed
         // </summary>
         public void OnDestroy() {
-            INSTANCE = null;
             LOGGER.Log("Destroyed");
         }
 
