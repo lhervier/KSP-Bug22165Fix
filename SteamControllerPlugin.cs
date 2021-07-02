@@ -71,7 +71,7 @@ namespace com.github.lhervier.ksp {
             // Prepare screen message
             this.screenMessage = new ScreenMessage(
                 string.Empty, 
-                10f, 
+                5f, 
                 ScreenMessageStyle.UPPER_RIGHT
             );
             LOGGER.Log("Status message ready");
@@ -133,11 +133,9 @@ namespace com.github.lhervier.ksp {
                 return;
             }
 
-            LOGGER.Log("=> Setting controller Action Set to " + actionSet.GetLabel());
             this.connectionDaemon.setActionSet(actionSet);
             
-            LOGGER.Log("Displaying message");
-            this.screenMessage.message = "Action Set: " + actionSet.GetLabel() + ".";
+            this.screenMessage.message = "Controller: " + actionSet.GetLabel() + ".";
             ScreenMessages.PostScreenMessage(this.screenMessage);
             this.prevActionSet = actionSet;
         }
@@ -146,22 +144,17 @@ namespace com.github.lhervier.ksp {
         //  Compute the action set to use, depending on the KSP context
         // </summary>
         private KSPActionSets ComputeActionSet() {
-            LOGGER.Log("Detecting Steam Controller Mode");
             if( HighLogic.LoadedSceneIsFlight ) {
-                LOGGER.Log("- Loaded Scene is Flight");
                 
                 if( MapView.MapIsEnabled ) {
-                    LOGGER.Log("=> MapView is enabled");
                     return KSPActionSets.Map;
                 }
                 
                 if( FlightGlobals.ActiveVessel != null && FlightGlobals.ActiveVessel.isEVA ) {
-                    LOGGER.Log("=> EVA is in progress");
                     return KSPActionSets.EVA;
                 }
                 
                 FlightUIMode mode = FlightUIModeController.Instance.Mode;
-                LOGGER.Log("=> Flight UI is in " + mode.ToString() + " mode");
                 switch( mode ) {
                 
                 case FlightUIMode.STAGING:
@@ -177,15 +170,12 @@ namespace com.github.lhervier.ksp {
                 }
             
             } else if( HighLogic.LoadedScene == GameScenes.TRACKSTATION ) {
-                LOGGER.Log("- Loaded scene is Tracking station");
                 return KSPActionSets.Map;
             
             } else if( HighLogic.LoadedSceneIsEditor) {
-                LOGGER.Log("- Loaded scene is Editor");
                 return KSPActionSets.Editor;
             
             } else if( HighLogic.LoadedScene == GameScenes.MISSIONBUILDER ) {
-                LOGGER.Log("- Loaded scene is Mission Builder");
                 return KSPActionSets.Editor;
             }
             
@@ -208,7 +198,7 @@ namespace com.github.lhervier.ksp {
         //  Controller disconnected
         // </summary>
         private void OnControllerDisconnected() {
-            LOGGER.Log("Canceling eventual action set change");
+            // Canceling eventual action set change
             this.CancelActionSetChange();
         }
 
@@ -223,7 +213,6 @@ namespace com.github.lhervier.ksp {
             if( !this.connectionDaemon.ControllerConnected ) {
                 return;
             }
-            LOGGER.Log("Level was loaded on scene : " + scn.ToString());
             this.TriggerActionSetChange();
         }
 
@@ -235,7 +224,6 @@ namespace com.github.lhervier.ksp {
             if( !this.connectionDaemon.ControllerConnected ) {
                 return;
             }
-            LOGGER.Log("Game has been paused");
             this.SetActionSet(KSPActionSets.Menu);
         }
         
@@ -247,7 +235,6 @@ namespace com.github.lhervier.ksp {
             if( !this.connectionDaemon.ControllerConnected ) {
                 return;
             }
-            LOGGER.Log("Game has been unpaused");
             this.SetActionSet(this.ComputeActionSet());
         }
         
@@ -258,7 +245,6 @@ namespace com.github.lhervier.ksp {
             if( !this.connectionDaemon.ControllerConnected ) {
                 return;
             }
-            LOGGER.Log("Flight UI mode changed to " + mode.ToString());
             this.TriggerActionSetChange();
         }
 
@@ -269,7 +255,6 @@ namespace com.github.lhervier.ksp {
             if( !this.connectionDaemon.ControllerConnected ) {
                 return;
             }
-            LOGGER.Log("Entered Map view");
             this.SetActionSet(KSPActionSets.Map);
         }
 
@@ -280,7 +265,6 @@ namespace com.github.lhervier.ksp {
             if( !this.connectionDaemon.ControllerConnected ) {
                 return;
             }
-            LOGGER.Log("Vessel changed");
             this.TriggerActionSetChange();
         }
     }
