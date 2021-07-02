@@ -10,7 +10,7 @@ namespace com.github.lhervier.ksp {
     //  Daemon in charge of listening to steam controllers connection/disconnection
     //  It also allow to change the current action set of the controller
     // </summary>
-    public class SteamControllerConnectionDaemon : MonoBehaviour {
+    public class SteamControllerDaemon : MonoBehaviour {
         
         // ==========================================================================================
         //                          Static properties

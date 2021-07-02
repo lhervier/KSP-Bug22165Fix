@@ -30,7 +30,7 @@ namespace com.github.lhervier.ksp {
         // <summary>
         //  Connection Daemon
         // </summary>
-        private SteamControllerConnectionDaemon connectionDaemon;
+        private SteamControllerDaemon connectionDaemon;
         
         // <summary>
         //  Delayed Action daemon
@@ -59,7 +59,7 @@ namespace com.github.lhervier.ksp {
             }
             
             // Attach to connection Daemon
-            this.connectionDaemon = gameObject.AddComponent<SteamControllerConnectionDaemon>();
+            this.connectionDaemon = gameObject.AddComponent<SteamControllerDaemon>();
             this.connectionDaemon.OnControllerConnected.Add(OnControllerConnected);
             this.connectionDaemon.OnControllerDisconnected.Add(OnControllerDisconnected);
             LOGGER.Log("Connection Daemon attached");
