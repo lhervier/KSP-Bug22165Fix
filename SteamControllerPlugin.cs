@@ -1,9 +1,11 @@
 using UnityEngine;
 
-namespace com.github.lhervier.ksp {
+namespace com.github.lhervier.ksp 
+{
     
     [KSPAddon(KSPAddon.Startup.PSystemSpawn, true)]
-    public class SteamControllerPlugin : MonoBehaviour {
+    public class SteamControllerPlugin : MonoBehaviour 
+    {
         
         // <summary>
         //  Logger
@@ -11,15 +13,15 @@ namespace com.github.lhervier.ksp {
         private static SteamControllerLogger LOGGER = new SteamControllerLogger();
         
         // <summary>
-        //  Delay before changing an action set (in frames)
+        //  Delay before applying an action set (in frames)
         // </summary>
         private static int DELAY = 10;
         
         // ==================================================================================
 
         // <summary>
-        //  Message indicating when on Steam Controller mode change
-        // </summary>    
+        //  Message indicating when on Steam Controller action set changes
+        // </summary>
         private ScreenMessage screenMessage;
 
         // <summary>
@@ -28,7 +30,7 @@ namespace com.github.lhervier.ksp {
         private KSPActionSets prevActionSet;
 
         // <summary>
-        //  Connection Daemon
+        //  Connection Daemon to the steam controller
         // </summary>
         private SteamControllerDaemon connectionDaemon;
         
@@ -44,7 +46,8 @@ namespace com.github.lhervier.ksp {
         // <summary>
         //  Make our plugin survive between scene loading
         // </summary>
-        protected void Awake() {
+        protected void Awake() 
+        {
             LOGGER.Log("Awaked");
             DontDestroyOnLoad(this);
         }
@@ -52,8 +55,10 @@ namespace com.github.lhervier.ksp {
         // <summary>
         //  Start of the plugin
         // </summary>
-        protected void Start() {
-            if( !SteamManager.Initialized ) {
+        protected void Start() 
+        {
+            if( !SteamManager.Initialized ) 
+            {
                 LOGGER.Log("Steam not detected. Unable to start the plugin.");
                 return;
             }
@@ -76,17 +81,9 @@ namespace com.github.lhervier.ksp {
             );
             LOGGER.Log("Status message ready");
 
-            // Hooks to KSP
-            GameEvents.onLevelWasLoadedGUIReady.Add(OnLevelWasLoadedGUIReady);
-            GameEvents.onGamePause.Add(OnGamePause);
-            GameEvents.onGameUnpause.Add(OnGameUnpause);
-            GameEvents.OnFlightUIModeChanged.Add(OnFlightUIModeChanged);
-            GameEvents.OnMapEntered.Add(OnMapEntered);
-            GameEvents.onVesselChange.Add(OnVesselChange);
-            LOGGER.Log("KSP hooks created");
-
             // When a controller is already connected
-            if( this.connectionDaemon.ControllerConnected ) {
+            if( this.connectionDaemon.ControllerConnected ) 
+            {
                 this.OnControllerConnected();
             }
             
@@ -96,7 +93,8 @@ namespace com.github.lhervier.ksp {
         // <summary>
         //  Plugin destroyed
         // </summary>
-        public void OnDestroy() {
+        public void OnDestroy() 
+        {
             Destroy(this.connectionDaemon);
             Destroy(this.delayedActionDaemon);
             LOGGER.Log("Destroyed");
@@ -107,29 +105,38 @@ namespace com.github.lhervier.ksp {
         // <summary>
         //  Trigger an action set change
         // </summary>
-        public void TriggerActionSetChange() {
+        public void TriggerActionSetChange() 
+        {
             this.delayedActionDaemon.TriggerDelayedAction(this._TriggerActionSetChange, DELAY);
         }
-        private void _TriggerActionSetChange() {
+        private void _TriggerActionSetChange() 
+        {
             this._SetActionSet(this.ComputeActionSet());
         }
 
         // <summary>
         //  Cancel an action set change
         // </summary>
-        private void CancelActionSetChange() {
+        private void CancelActionSetChange() 
+        {
             this.delayedActionDaemon.CancelDelayedAction(this._TriggerActionSetChange);
         }
 
         // <summary>
         //  Change action set NOW
         // </summary>
-        public void SetActionSet(KSPActionSets actionSet) {
+        public void SetActionSet(KSPActionSets actionSet) 
+        {
             this.CancelActionSetChange();
             this._SetActionSet(actionSet);
         }
-        private void _SetActionSet(KSPActionSets actionSet) {
-            if( actionSet == this.prevActionSet ) {
+        private void _SetActionSet(KSPActionSets actionSet) 
+        {
+            if( !this.connectionDaemon.ControllerConnected ) {
+                return;
+            }
+            if( actionSet == this.prevActionSet ) 
+            {
                 return;
             }
 
@@ -143,19 +150,24 @@ namespace com.github.lhervier.ksp {
         // <summary>
         //  Compute the action set to use, depending on the KSP context
         // </summary>
-        private KSPActionSets ComputeActionSet() {
-            if( HighLogic.LoadedSceneIsFlight ) {
+        private KSPActionSets ComputeActionSet() 
+        {
+            if( HighLogic.LoadedSceneIsFlight ) 
+            {
                 
-                if( MapView.MapIsEnabled ) {
+                if( MapView.MapIsEnabled ) 
+                {
                     return KSPActionSets.Map;
                 }
                 
-                if( FlightGlobals.ActiveVessel != null && FlightGlobals.ActiveVessel.isEVA ) {
+                if( FlightGlobals.ActiveVessel != null && FlightGlobals.ActiveVessel.isEVA )    // FlightGlobals.ActiveVessel is null when loading a saved game
+                {
                     return KSPActionSets.EVA;
                 }
                 
                 FlightUIMode mode = FlightUIModeController.Instance.Mode;
-                switch( mode ) {
+                switch( mode ) 
+                {
                 
                 case FlightUIMode.STAGING:
                 case FlightUIMode.MANEUVER_EDIT:     // May not happen has editing maneuvre is only available in map view
@@ -165,17 +177,21 @@ namespace com.github.lhervier.ksp {
                 case FlightUIMode.DOCKING:
                     return KSPActionSets.Docking;
                 
-                case FlightUIMode.MAPMODE:          // Seems to never be called without another mode called just after (exception in tracking station maybe ?)
+                case FlightUIMode.MAPMODE:          // Seems to called alone (without another event juste next) only when in tracking station
                     return KSPActionSets.Map;
                 }
             
-            } else if( HighLogic.LoadedScene == GameScenes.TRACKSTATION ) {
+            }
+            else if( HighLogic.LoadedScene == GameScenes.TRACKSTATION ) 
+            {
                 return KSPActionSets.Map;
-            
-            } else if( HighLogic.LoadedSceneIsEditor) {
+            } 
+            else if( HighLogic.LoadedSceneIsEditor) 
+            {
                 return KSPActionSets.Editor;
-            
-            } else if( HighLogic.LoadedScene == GameScenes.MISSIONBUILDER ) {
+            }
+            else if( HighLogic.LoadedScene == GameScenes.MISSIONBUILDER ) 
+            {
                 return KSPActionSets.Editor;
             }
             
@@ -189,7 +205,17 @@ namespace com.github.lhervier.ksp {
         // <summary>
         //  New controller connected
         // </summary>
-        private void OnControllerConnected() {
+        private void OnControllerConnected() 
+        {
+            // Hooks to KSP
+            GameEvents.onLevelWasLoadedGUIReady.Add(OnLevelWasLoadedGUIReady);
+            GameEvents.onGamePause.Add(OnGamePause);
+            GameEvents.onGameUnpause.Add(OnGameUnpause);
+            GameEvents.OnFlightUIModeChanged.Add(OnFlightUIModeChanged);
+            GameEvents.OnMapEntered.Add(OnMapEntered);
+            GameEvents.onVesselChange.Add(OnVesselChange);
+            LOGGER.Log("KSP hooks created");
+
             // Trigger an action set change to load the right action set
             this.TriggerActionSetChange();
         }
@@ -197,9 +223,19 @@ namespace com.github.lhervier.ksp {
         // <summary>
         //  Controller disconnected
         // </summary>
-        private void OnControllerDisconnected() {
+        private void OnControllerDisconnected() 
+        {
             // Canceling eventual action set change
             this.CancelActionSetChange();
+
+            // Unhooks to KSP
+            GameEvents.onLevelWasLoadedGUIReady.Remove(OnLevelWasLoadedGUIReady);
+            GameEvents.onGamePause.Remove(OnGamePause);
+            GameEvents.onGameUnpause.Remove(OnGameUnpause);
+            GameEvents.OnFlightUIModeChanged.Remove(OnFlightUIModeChanged);
+            GameEvents.OnMapEntered.Remove(OnMapEntered);
+            GameEvents.onVesselChange.Remove(OnVesselChange);
+            LOGGER.Log("KSP hooks removed");
         }
 
         // ========================================================================================
@@ -209,10 +245,9 @@ namespace com.github.lhervier.ksp {
         // <summary>
         //  A new scene has been loaded
         // </summary>
-        protected void OnLevelWasLoadedGUIReady(GameScenes scn) {
-            if( !this.connectionDaemon.ControllerConnected ) {
-                return;
-            }
+        protected void OnLevelWasLoadedGUIReady(GameScenes scn) 
+        {
+            LOGGER.Log("OnLevelWasLoadedGUIReady");
             this.TriggerActionSetChange();
         }
 
@@ -220,10 +255,9 @@ namespace com.github.lhervier.ksp {
         //  Will be fired when pause main menu is displayed, but also when entering
         //  astronaut complex, R&D, Mission Control or administration building.
         // </summary>
-        protected void OnGamePause() {
-            if( !this.connectionDaemon.ControllerConnected ) {
-                return;
-            }
+        protected void OnGamePause() 
+        {
+            LOGGER.Log("OnGamePause");
             this.SetActionSet(KSPActionSets.Menu);
         }
         
@@ -231,40 +265,36 @@ namespace com.github.lhervier.ksp {
         //  Will be fired when game is unpaused, but also when leaving
         //  astronaut complex, R&D, Mission Control or administration building 
         // </summary>
-        protected void OnGameUnpause() {
-            if( !this.connectionDaemon.ControllerConnected ) {
-                return;
-            }
+        protected void OnGameUnpause() 
+        {
+            LOGGER.Log("OnGameUnpaused");
             this.SetActionSet(this.ComputeActionSet());
         }
         
         // <summary>
         //  User toggle the flightUI buttons (staging, docking, maps or maneuvre)
         // </summary>
-        protected void OnFlightUIModeChanged(FlightUIMode mode) {
-            if( !this.connectionDaemon.ControllerConnected ) {
-                return;
-            }
+        protected void OnFlightUIModeChanged(FlightUIMode mode) 
+        {
+            LOGGER.Log("OnFlightUIModeChanged");
             this.TriggerActionSetChange();
         }
 
         // <summary>
         //  Map mode entered (mainly in tracking station)
         // </summary>
-        protected void OnMapEntered() {
-            if( !this.connectionDaemon.ControllerConnected ) {
-                return;
-            }
+        protected void OnMapEntered() 
+        {
+            LOGGER.Log("OnMapEntered");
             this.SetActionSet(KSPActionSets.Map);
         }
 
         // <summary>
         //  Vessel changed
         // </summary>
-        protected void OnVesselChange(Vessel ves) {
-            if( !this.connectionDaemon.ControllerConnected ) {
-                return;
-            }
+        protected void OnVesselChange(Vessel ves) 
+        {
+            LOGGER.Log("OnVesselChange");
             this.TriggerActionSetChange();
         }
     }

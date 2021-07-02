@@ -4,13 +4,15 @@ using System.Collections.Generic;
 using UnityEngine;
 using Steamworks;
 
-namespace com.github.lhervier.ksp {
+namespace com.github.lhervier.ksp 
+{
 
     // <summary>
     //  Daemon in charge of listening to steam controllers connection/disconnection
     //  It also allow to change the current action set of the controller
     // </summary>
-    public class SteamControllerDaemon : MonoBehaviour {
+    public class SteamControllerDaemon : MonoBehaviour 
+    {
         
         // ==========================================================================================
         //                          Static properties
@@ -34,14 +36,14 @@ namespace com.github.lhervier.ksp {
         public List<Action> OnControllerDisconnected {get; private set; }
 
         // <summary>
-        //  Has the controller been configured ?
+        //  Is a controller connected ?
         // </summary>
         public bool ControllerConnected { get; private set; }
 
         // ==============================================
 
-// <summary>
-        //  Handle to the first connected controller. No sense if controllerConnected = false
+        // <summary>
+        //  Handle to the first connected controller. No sense if ControllerConnected = false
         // </summary>
         private ControllerHandle_t controllerHandle;
 
@@ -61,9 +63,10 @@ namespace com.github.lhervier.ksp {
         // =======================================================================
 
         // <summary>
-        //  Plugin awaked
+        //  Component awaked
         // </summary>
-        public void Awake() {
+        public void Awake() 
+        {
             DontDestroyOnLoad(this);
             
             this.OnControllerConnected = new List<Action>();
@@ -73,22 +76,25 @@ namespace com.github.lhervier.ksp {
         }
 
         // <summary>
-        //  Plugin destroyed
+        //  Component destroyed
         // </summary>
-        public void OnDestroy() {
+        public void OnDestroy() 
+        {
             LOGGER.Log("Destroyed");
         }
 
         // <summary>
-        //  Startup of the beahviour
+        //  Startup of the component
         // </summary>
-        public void Start() {
-            if( !SteamManager.Initialized ) {
+        public void Start() 
+        {
+            if( !SteamManager.Initialized ) 
+            {
                 LOGGER.Log("Steam not detected. Unable to start the daemon.");
                 return;
             }
 
-            SteamAPI.RunCallbacks();
+            SteamAPI.RunCallbacks();        // ?? What for ? We don't use Steam Callbacks
             SteamController.Init();
             
             this.StartCoroutine(this.CheckForController());
@@ -102,56 +108,74 @@ namespace com.github.lhervier.ksp {
         // <summary>
         //  Main loop to detect controller connection/disconnection
         // </summary>
-        private IEnumerator CheckForController() {
+        private IEnumerator CheckForController() 
+        {
             WaitForSeconds waitFor1Second = new WaitForSeconds(1);
-            while( true ) {
+            while( true ) 
+            {
                 SteamController.RunFrame();
 
                 // Detect connection/disconnection
                 int nbControllers = SteamController.GetConnectedControllers(this._controllerHandles);
                 bool newController = false;
                 bool disconnectedController = false;
-                if( nbControllers == 0 ) {
-                    if( this.ControllerConnected ) {
+                if( nbControllers == 0 ) 
+                {
+                    if( this.ControllerConnected ) 
+                    {
                         newController = false;
                         disconnectedController = true;
-                    } else {
+                    }
+                    else
+                    {
                         newController = false;
                         disconnectedController = false;
                     }
-                } else {
-                    if( this.ControllerConnected ) {
-                        if( this.controllerHandle == this._controllerHandles[0] ) {
+                }
+                else
+                {
+                    if( this.ControllerConnected ) 
+                    {
+                        if( this.controllerHandle == this._controllerHandles[0] ) 
+                        {
                             newController = false;
                             disconnectedController = false;
-                        } else {
+                        }
+                        else
+                        {
                             newController = true;
                             disconnectedController = true;
                         }
-                    } else {
+                    }
+                    else
+                    {
                         newController = true;
                         disconnectedController = false;
                     }
                 }
 
                 // Disconnect the current controller
-                if( disconnectedController ) {
+                if( disconnectedController ) 
+                {
                     LOGGER.Log("Steam Controller disconnected");
                     this.ControllerConnected = false;
                     this.UnloadActionSets();
-                    foreach( Action action in this.OnControllerDisconnected ) {
+                    foreach( Action action in this.OnControllerDisconnected ) 
+                    {
                         action();
                     }
                 }
 
-                // Connect a new controller
-                if( newController ) {
+                // Connects a new controller
+                if( newController ) 
+                {
                     LOGGER.Log("Steam Controller connected");
                     this.controllerHandle = this._controllerHandles[0];
                     this.ControllerConnected = true;
                     this.LoadActionSets();
                     this.StartCoroutine(this.SayHello());
-                    foreach( Action action in this.OnControllerConnected ) {
+                    foreach( Action action in this.OnControllerConnected ) 
+                    {
                         action();
                     }
                 }
@@ -165,18 +189,22 @@ namespace com.github.lhervier.ksp {
         //  Load action sets handles. The API don' ask for a handle on a controller.
         //  It seems to load the action sets of the first controller.
         // </summary>
-        private void LoadActionSets() {
-            if( !this.ControllerConnected ) {
+        private void LoadActionSets() 
+        {
+            if( !this.ControllerConnected ) 
+            {
                 return;
             }
 
             LOGGER.Log("Loading Action Set Handles");
-            foreach(KSPActionSets actionSet in Enum.GetValues(typeof(KSPActionSets))) {
+            foreach(KSPActionSets actionSet in Enum.GetValues(typeof(KSPActionSets))) 
+            {
                 string actionSetName = actionSet.GetId();
                 LOGGER.Log("- Getting action set handle for " + actionSetName);
                 // Action Sets list should depend on the used controller. But that's not what the API is waiting for...
                 ControllerActionSetHandle_t actionSetHandle = SteamController.GetActionSetHandle(actionSetName);
-                if( actionSetHandle.m_ControllerActionSetHandle == 0L ) {
+                if( actionSetHandle.m_ControllerActionSetHandle == 0L ) 
+                {
                     LOGGER.Log("ERROR : Action set handle for " + actionSetName + " not found. I will use the default action set instead");
                 }
                 this.actionsSetsHandles[actionSet] = actionSetHandle;
@@ -186,17 +214,21 @@ namespace com.github.lhervier.ksp {
         // <summary>
         //  Unloads the action sets
         // </summary>
-        private void UnloadActionSets() {
+        private void UnloadActionSets() 
+        {
             this.actionsSetsHandles.Clear();
         }
 
         // <summary>
         //  Trigger a set of pulses on the current controller to say hello
         // </summary>
-        private IEnumerator SayHello() {
-            if( this.ControllerConnected ) {
+        private IEnumerator SayHello() 
+        {
+            if( this.ControllerConnected ) 
+            {
                 LOGGER.Log("Hello new Controller !!");
-                for( int i = 0; i < 4; i++ ) {
+                for( int i = 0; i < 4; i++ ) 
+                {
                     SteamController.TriggerHapticPulse(this.controllerHandle, Steamworks.ESteamControllerPad.k_ESteamControllerPad_Right, ushort.MaxValue);
                     yield return new WaitForSeconds(0.1f);
                     SteamController.TriggerHapticPulse(this.controllerHandle, Steamworks.ESteamControllerPad.k_ESteamControllerPad_Left, ushort.MaxValue);
@@ -211,8 +243,10 @@ namespace com.github.lhervier.ksp {
         // <summary>
         //  Change the current action set
         // </summary>
-        public void setActionSet(KSPActionSets actionSet) {
-            if( !this.ControllerConnected ) {
+        public void setActionSet(KSPActionSets actionSet) 
+        {
+            if( !this.ControllerConnected ) 
+            {
                 return;
             }
 

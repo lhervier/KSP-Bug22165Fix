@@ -3,13 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace com.github.lhervier.ksp {
+namespace com.github.lhervier.ksp 
+{
 
     // <summary>
     //  Allows to launch an action in a set of frames. If the same action is triggered
     //  a second time, the launch of the action will be delayed again.
     // </summary>
-    public class DelayedActionDaemon : MonoBehaviour {
+    public class DelayedActionDaemon : MonoBehaviour 
+    {
         
         // <summary>
         //  Logger
@@ -20,7 +22,7 @@ namespace com.github.lhervier.ksp {
 
         // <summary>
         //  Frame count at which the delayed action will occur
-        //  The real action will be in 10 frames later, except if another operation
+        //  except if another operation
         //  ask for another update, which will increase this value.
         // </summary>
         private IDictionary<Action, int> actionThreshold = new Dictionary<Action, int>();
@@ -35,24 +37,27 @@ namespace com.github.lhervier.ksp {
         // =======================================================================
 
         // <summary>
-        //  Plugin awaked
+        //  Component awaked
         // </summary>
-        public void Awake() {
+        public void Awake() 
+        {
             LOGGER.Log("Awaked");
             DontDestroyOnLoad(this);
         }
 
         // <summary>
-        //  Plugin destroyed
+        //  Component destroyed
         // </summary>
-        public void OnDestroy() {
+        public void OnDestroy() 
+        {
             LOGGER.Log("Destroyed");
         }
 
         // <summary>
-        //  Startup of the beahviour
+        //  Startup of the component
         // </summary>
-        public void Start() {
+        public void Start() 
+        {
             LOGGER.Log("Started");
         }
 
@@ -61,24 +66,30 @@ namespace com.github.lhervier.ksp {
         // <summary>
         //  Trigger an action in the future
         // </summary>
-        public void TriggerDelayedAction(Action action, int inFrames) {
+        public void TriggerDelayedAction(Action action, int inFrames) 
+        {
             int threshold;
-            if( this.actionThreshold.ContainsKey(action) ) {
+            if( this.actionThreshold.ContainsKey(action) ) 
+            {
                 threshold = Math.Max(Time.frameCount + inFrames, this.actionThreshold[action]);
             } else {
                 threshold = Time.frameCount + inFrames;
             }
             this.actionThreshold[action] = threshold;
-            if( !this.coroutines.ContainsKey(action) ) {
+            if( !this.coroutines.ContainsKey(action) ) 
+            {
                 this.coroutines[action] = this.StartCoroutine(_TriggerDelayedAction(action));
             }
         }
 
-        private IEnumerator _TriggerDelayedAction(Action action) {
-            while( this.actionThreshold.ContainsKey(action) && Time.frameCount < this.actionThreshold[action] ) {
+        private IEnumerator _TriggerDelayedAction(Action action) 
+        {
+            while( this.actionThreshold.ContainsKey(action) && Time.frameCount < this.actionThreshold[action] ) 
+            {
                 yield return null;
             }
-            if( this.actionThreshold.ContainsKey(action) ) {
+            if( this.actionThreshold.ContainsKey(action) ) 
+            {
                 action();
             }
             this.coroutines.Remove(action);
@@ -88,8 +99,10 @@ namespace com.github.lhervier.ksp {
         // <summary>
         //  Cancel any action set change request
         // </summary>
-        public void CancelDelayedAction(Action action) {
-            if( this.coroutines.ContainsKey(action) ) {
+        public void CancelDelayedAction(Action action) 
+        {
+            if( this.coroutines.ContainsKey(action) ) 
+            {
                 this.StopCoroutine(this.coroutines[action]);
             }
             this.coroutines.Remove(action);
