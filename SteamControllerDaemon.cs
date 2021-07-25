@@ -28,12 +28,12 @@ namespace com.github.lhervier.ksp
         // <summary>
         //  Called when a new controller is connected
         // </summary>
-        public List<Action> OnControllerConnected { get; private set; }
+        public EventVoid OnControllerConnected { get; private set; }
 
         // <summary>
         //  Called when a controller is disconnected
         // </summary>
-        public List<Action> OnControllerDisconnected {get; private set; }
+        public EventVoid OnControllerDisconnected {get; private set; }
 
         // <summary>
         //  Is a controller connected ?
@@ -69,8 +69,8 @@ namespace com.github.lhervier.ksp
         {
             DontDestroyOnLoad(this);
             
-            this.OnControllerConnected = new List<Action>();
-            this.OnControllerDisconnected = new List<Action>();
+            this.OnControllerConnected = new EventVoid("controller.OnConnected");
+            this.OnControllerDisconnected = new EventVoid("controller.OnDisconnected");
             this.ControllerConnected = false;
             LOGGER.Log("Awaked");
         }
@@ -160,10 +160,7 @@ namespace com.github.lhervier.ksp
                     LOGGER.Log("Steam Controller disconnected");
                     this.ControllerConnected = false;
                     this.UnloadActionSets();
-                    foreach( Action action in this.OnControllerDisconnected ) 
-                    {
-                        action();
-                    }
+                    this.OnControllerDisconnected.Fire();
                 }
 
                 // Connects a new controller
@@ -174,10 +171,7 @@ namespace com.github.lhervier.ksp
                     this.ControllerConnected = true;
                     this.LoadActionSets();
                     this.StartCoroutine(this.SayHello());
-                    foreach( Action action in this.OnControllerConnected ) 
-                    {
-                        action();
-                    }
+                    this.OnControllerConnected.Fire();
                 }
 
                 // Wait for 1 second
