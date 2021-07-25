@@ -185,11 +185,6 @@ namespace com.github.lhervier.ksp
         // </summary>
         private void LoadActionSets() 
         {
-            if( !this.ControllerConnected ) 
-            {
-                return;
-            }
-
             LOGGER.Log("Loading Action Set Handles");
             foreach(KSPActionSets actionSet in Enum.GetValues(typeof(KSPActionSets))) 
             {
