@@ -59,6 +59,13 @@ namespace com.github.lhervier.ksp
         private ControllerHandle_t[] _controllerHandles = new ControllerHandle_t[Constants.STEAM_CONTROLLER_MAX_COUNT];
 
         // =======================================================================
+
+        // <summary>
+        //  Coroutine to check for a controller
+        // </summary>
+        private IEnumerator checkForControllerCoroutine;
+
+        // =======================================================================
         //              Unity Lifecycle
         // =======================================================================
 
@@ -80,6 +87,7 @@ namespace com.github.lhervier.ksp
         // </summary>
         public void OnDestroy() 
         {
+            this.StopCoroutine(this.checkForControllerCoroutine);
             LOGGER.Log("Destroyed");
         }
 
@@ -97,7 +105,8 @@ namespace com.github.lhervier.ksp
             SteamAPI.RunCallbacks();        // ?? What for ? We don't use Steam Callbacks
             SteamController.Init();
             
-            this.StartCoroutine(this.CheckForController());
+            this.checkForControllerCoroutine = this.CheckForController();
+            this.StartCoroutine(this.checkForControllerCoroutine);
             LOGGER.Log("Started");
         }
 
