@@ -1,6 +1,6 @@
 At the time of writing, the introduction of Maneuvre Mode in KSP 1.6 broke the detection of the action set to activate in game. See bug [https://bugs.kerbalspaceprogram.com/issues/22165](https://bugs.kerbalspaceprogram.com/issues/22165) for more details.
 
-Thanks to the well documented public class "SteamController" included in KSP base classes, writing a plugin that will activate Action Sets is not difficult. So, I reimplemented mine... even with some "help". 
+Thanks to the well documented public class "SteamController", writing a plugin that will activate Action Sets is not difficult. So, I reimplemented mine... even with some "help". 
 
 To use this plugin :
 
