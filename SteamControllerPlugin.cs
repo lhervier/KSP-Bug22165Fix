@@ -1,4 +1,6 @@
 using UnityEngine;
+using System;
+using System.Collections;
 
 namespace com.github.lhervier.ksp 
 {
@@ -57,18 +59,6 @@ namespace com.github.lhervier.ksp
         // </summary>
         protected void Start() 
         {
-            if( !SteamManager.Initialized ) 
-            {
-                LOGGER.Log("Steam not detected. Unable to start the plugin.");
-                return;
-            }
-            
-            // Attach to connection Daemon
-            this.connectionDaemon = gameObject.AddComponent<SteamControllerDaemon>();
-            this.connectionDaemon.OnControllerConnected.Add(OnControllerConnected);
-            this.connectionDaemon.OnControllerDisconnected.Add(OnControllerDisconnected);
-            LOGGER.Log("Connection Daemon attached");
-
             // Attach to delayed action daemon
             this.delayedActionDaemon = gameObject.AddComponent<DelayedActionDaemon>();
             LOGGER.Log("Delayed Actions Daemon attached");
@@ -81,12 +71,24 @@ namespace com.github.lhervier.ksp
             );
             LOGGER.Log("Status message ready");
 
-            // When a controller is already connected
-            if( this.connectionDaemon.ControllerConnected ) 
-            {
-                this.OnControllerConnected();
-            }
-            
+            // Attach to connection Daemon
+            this.StartCoroutine(            
+                this.WaitForControllerDaemon(
+                    () => {
+                        this.connectionDaemon = SteamControllerDaemon.Instance;
+                        
+                        this.connectionDaemon.OnControllerConnected.Add(this.OnControllerConnected);
+                        this.connectionDaemon.OnControllerDisconnected.Add(this.OnControllerDisconnected);
+                        LOGGER.Log("Controller Events attached");
+
+                        // When a controller is already connected
+                        if( this.connectionDaemon.ControllerConnected ) 
+                        {
+                            this.OnControllerConnected();
+                        }
+                    }
+                )
+            );
             LOGGER.Log("Started");
         }
 
@@ -95,9 +97,25 @@ namespace com.github.lhervier.ksp
         // </summary>
         public void OnDestroy() 
         {
-            Destroy(this.connectionDaemon);
+            this.connectionDaemon.OnControllerDisconnected.Remove(OnControllerDisconnected);
+            this.connectionDaemon.OnControllerConnected.Remove(OnControllerConnected);
             Destroy(this.delayedActionDaemon);
             LOGGER.Log("Destroyed");
+        }
+
+        // <summary>
+        //  Wait for the controller daemon to be available
+        // </summary>
+        // <param name="next">Action to execute once the daemon is ready</param>
+        private IEnumerator WaitForControllerDaemon(Action next) 
+        {
+            LOGGER.Log("Waiting for Controller Daemon");
+            while( SteamControllerDaemon.Instance == null )
+            {
+                yield return null;
+            }
+            LOGGER.Log("Controller Daemon found");
+            next();
         }
 
         // ====================================================================================
