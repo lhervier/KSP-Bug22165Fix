@@ -102,7 +102,6 @@ namespace com.github.lhervier.ksp
                 return;
             }
 
-            SteamAPI.RunCallbacks();        // ?? What for ? We don't use Steam Callbacks
             SteamController.Init();
             
             this.checkForControllerCoroutine = this.CheckForController();
