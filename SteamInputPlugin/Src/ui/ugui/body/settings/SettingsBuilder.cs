@@ -123,16 +123,10 @@ namespace com.github.lhervier.ksp.steaminput.ui.ugui.body.settings
             logLevelComboController = new ComboBuilder()
                 .WithParent(section)
                 .WithLabel(ModLocalization.GetString("settings_logLevel"))
-                .WithLabelFor(GetLogLevelLabel)
+                .WithLabelFor(LogLevels.LabelFor)
                 .Build();
 
             BuildHint(section, ModLocalization.GetString("settings_loggingHint"));
-        }
-
-        private static string GetLogLevelLabel(string level)
-        {
-            string localized = ModLocalization.GetString("logLevel_" + level);
-            return string.IsNullOrEmpty(localized) ? level.ToString() : localized;
         }
 
         // ".kset-section": padded vertical container for a section's content.

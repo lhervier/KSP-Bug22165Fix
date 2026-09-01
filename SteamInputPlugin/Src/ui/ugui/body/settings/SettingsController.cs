@@ -3,14 +3,11 @@ using com.github.lhervier.ksp.shared.ugui.button;
 using com.github.lhervier.ksp.shared.ugui.combo;
 using com.github.lhervier.ksp.shared;
 using System;
-using System.Collections.Generic;
 
 namespace com.github.lhervier.ksp.steaminput.ui.ugui.body.settings
 {
     public class SettingsController : MonoBehaviour
     {
-        private readonly List<string> _levels = new List<string>();
-        
         // ===================================
         // Life cycle
         // ===================================
@@ -36,15 +33,6 @@ namespace com.github.lhervier.ksp.steaminput.ui.ugui.body.settings
             return this;
         }
 
-        public void Awake()
-        {
-            LogLevel[] levels = (LogLevel[]) Enum.GetValues(typeof(LogLevel));
-            foreach( LogLevel level in levels )
-            {
-                _levels.Add(level.ToString());
-            }
-        }
-
         public void Start()
         {
             if( this._backButtonController != null )
@@ -54,7 +42,7 @@ namespace com.github.lhervier.ksp.steaminput.ui.ugui.body.settings
             if( _logLevelComboController != null )
             {
                 _logLevelComboController.SetOptions(
-                    _levels,
+                    LogLevels.Names,
                     _viewModel.LogLevel.ToString()
                 );
                 _logLevelComboController.OnSelect.Add(OnSelect);
